@@ -1,4 +1,4 @@
-// src/context/CarritoContext.tsx
+// src/context/CarritoContext.tsx - VERSIÓN CORREGIDA
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
@@ -109,8 +109,20 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  // ✅ VERSIÓN CORREGIDA - vaciarCarrito ahora limpia localStorage inmediatamente
   const vaciarCarrito = () => {
+    console.log('🔄 Vaciando carrito...');
     setItems([]);
+    
+    // Limpiar localStorage inmediatamente
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem(CARRITO_STORAGE_KEY);
+        console.log('🗑️ localStorage limpiado inmediatamente');
+      } catch (error) {
+        console.error('Error al limpiar localStorage:', error);
+      }
+    }
   };
 
   const estaEnCarrito = (id: string) => {

@@ -1,26 +1,12 @@
-// src/app/carrito/page.tsx
+// src/app/carrito/page.tsx - VERSIÓN CORREGIDA
 'use client';
 
 import { useCarritoConNotificaciones } from '@/hooks/useCarritoConNotificaciones';
-import { useToast } from '@/context/ToastContext';
 import Image from 'next/image';
 import Link from 'next/link';
 
 export default function CarritoPage() {
   const { items, removerDelCarrito, actualizarCantidad, vaciarCarrito, total } = useCarritoConNotificaciones();
-  const { addToast } = useToast();
-
-  const handleProcederPago = () => {
-    if (items.length > 0) {
-      addToast('¡Compra realizada con éxito! 📚', 'success');
-      // Simular proceso de pago
-      setTimeout(() => {
-        vaciarCarrito();
-      }, 2000);
-    } else {
-      addToast('El carrito está vacío', 'warning');
-    }
-  };
 
   if (items.length === 0) {
     return (
@@ -129,12 +115,14 @@ export default function CarritoPage() {
               >
                 Seguir Comprando
               </Link>
-              <button 
-                onClick={handleProcederPago}
-                className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors font-medium"
+              
+              {/* BOTÓN CORREGIDO - Ahora lleva al checkout real */}
+              <Link 
+                href="/checkout"
+                className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors text-center font-medium"
               >
                 Proceder al Pago
-              </button>
+              </Link>
             </div>
 
             {/* Resumen de la compra */}
