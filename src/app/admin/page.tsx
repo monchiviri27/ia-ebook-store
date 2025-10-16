@@ -117,22 +117,23 @@ export default function AdminPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-2xl mx-auto px-4">
-        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
+    <div className="min-h-screen bg-gray-50 py-4 px-3 sm:py-8 sm:px-4">
+      {/* Contenedor principal con padding responsive */}
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8 text-gray-800">
           Panel de Administración
         </h1>
 
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
           {message && (
-            <div className={`p-4 rounded-lg mb-6 ${
+            <div className={`p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 ${
               message.includes('✅') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
             }`}>
               {message}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             {/* Título */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -144,8 +145,8 @@ export default function AdminPage() {
                 value={formData.titulo}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Ej: El Secreto del Bosque Encantado"
+                className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Ej: El Secreto del Bosque"
               />
             </div>
 
@@ -160,7 +161,7 @@ export default function AdminPage() {
                 value={formData.autor}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Ej: María González"
               />
             </div>
@@ -175,14 +176,14 @@ export default function AdminPage() {
                 value={formData.descripcion}
                 onChange={handleChange}
                 required
-                rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Describe el libro..."
+                rows={3}
+                className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical"
+                placeholder="Describe el libro brevemente..."
               />
             </div>
 
-            {/* Precio y Género */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Precio y Género - En columna en móvil, fila en desktop */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Precio (USD) *
@@ -195,7 +196,7 @@ export default function AdminPage() {
                   required
                   step="0.01"
                   min="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="9.99"
                 />
               </div>
@@ -209,7 +210,7 @@ export default function AdminPage() {
                   value={formData.genero}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Seleccionar género</option>
                   {generos.map(genero => (
@@ -231,8 +232,8 @@ export default function AdminPage() {
                   value={formData.portada_url}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="https://klgagrgeyixfmovgzhst.supabase.co/storage/v1/object/public/portadas/libro.jpg"
+                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="https://.../portada.jpg"
                 />
               </div>
 
@@ -246,8 +247,8 @@ export default function AdminPage() {
                   value={formData.ruta_pdf}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="https://klgagrgeyixfmovgzhst.supabase.co/storage/v1/object/public/ebooks/libro.pdf"
+                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="https://.../libro.pdf"
                 />
               </div>
 
@@ -261,8 +262,8 @@ export default function AdminPage() {
                   value={formData.ruta_epub}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="https://klgagrgeyixfmovgzhst.supabase.co/storage/v1/object/public/ebooks/libro.epub"
+                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="https://.../libro.epub"
                 />
               </div>
             </div>
@@ -271,24 +272,23 @@ export default function AdminPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm sm:text-base"
             >
               {loading ? 'Agregando Libro...' : '📚 Agregar Libro a la Tienda'}
             </button>
           </form>
         </div>
 
-        {/* Instrucciones */}
-        <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+        {/* Instrucciones responsive */}
+        <div className="mt-6 sm:mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6">
           <h3 className="text-lg font-semibold text-blue-800 mb-3">
             📋 Instrucciones para agregar libros:
           </h3>
-          <ul className="text-blue-700 space-y-2 text-sm">
+          <ul className="text-blue-700 space-y-2 text-xs sm:text-sm">
             <li>• <strong>Sube los archivos a Supabase Storage</strong> primero</li>
-            <li>• <strong>Portadas:</strong> Bucket "portadas" (formatos: JPG, PNG, WebP)</li>
-            <li>• <strong>Libros:</strong> Bucket "ebooks" (formatos: PDF, EPUB)</li>
+            <li>• <strong>Portadas:</strong> Bucket "portadas" (JPG, PNG, WebP)</li>
+            <li>• <strong>Libros:</strong> Bucket "ebooks" (PDF, EPUB)</li>
             <li>• <strong>Copia las URLs públicas</strong> y pégalas en el formulario</li>
-            <li>• <strong>Ejemplo de URL:</strong> https://klgagrgeyixfmovgzhst.supabase.co/storage/v1/object/public/ebooks/mi-libro.pdf</li>
           </ul>
         </div>
       </div>
