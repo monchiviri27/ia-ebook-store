@@ -3,7 +3,7 @@
 
 import { useCarrito } from '@/context/CarritoContext';
 import { useToast } from '@/context/ToastContext';
-import { Libro } from '@/context/CarritoContext';
+import type { Libro } from '@/context/CarritoContext';
 
 export function useCarritoConNotificaciones() {
   const carrito = useCarrito();

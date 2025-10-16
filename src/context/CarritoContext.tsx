@@ -3,7 +3,8 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
-interface Libro {
+// EXPORTAR la interfaz Libro
+export interface Libro {
   id: string;
   titulo: string;
   autor: string;
