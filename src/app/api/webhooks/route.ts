@@ -1,8 +1,7 @@
-// Versión con verificación de tipos más robusta
+// src/app/api/webhooks/route.ts - CORREGIDO
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
-import { supabase } from '@/lib/supabase';
 import Stripe from 'stripe';
 
 export async function POST(req: Request) {
@@ -22,44 +21,18 @@ export async function POST(req: Request) {
     return new NextResponse('Webhook error', { status: 400 });
   }
 
-  // ✅ Manejar específicamente checkout.session.completed
+  // ✅ SOLUCIÓN: Agregar type casting
   if (event.type === 'checkout.session.completed') {
-    const session = event.data.object as Stripe.Checkout.Session;
+    const session = event.data.object as Stripe.Checkout.Session; // ← AQUÍ ESTÁ LA SOLUCIÓN
     
-    // ✅ Verificaciones adicionales para mayor seguridad
-    if (!session.id) {
-      console.error('❌ Session ID no encontrado');
-      return new NextResponse('Session ID missing', { status: 400 });
-    }
-
     try {
-      console.log('✅ Pago completado - Session ID:', session.id);
+      console.log('✅ Pago completado:', session.id); // ← Ahora session.id funciona
       console.log('📧 Customer:', session.customer_email);
-      console.log('💰 Amount:', session.amount_total ? session.amount_total / 100 : 'N/A');
+      console.log('💰 Amount:', session.amount_total);
       
-      // Tu lógica de procesamiento aquí
-      // await procesarPagoExitoso(session);
-
     } catch (error) {
-      console.error('❌ Error procesando pago exitoso:', error);
-      // No devolver error 500 para no reintentar el webhook
+      console.error('❌ Error procesando pago:', error);
     }
-  }
-
-  // ✅ Manejar otros eventos importantes
-  switch (event.type) {
-    case 'payment_intent.succeeded':
-      const paymentIntent = event.data.object as Stripe.PaymentIntent;
-      console.log('💳 PaymentIntent succeeded:', paymentIntent.id);
-      break;
-      
-    case 'payment_intent.payment_failed':
-      const failedPayment = event.data.object as Stripe.PaymentIntent;
-      console.log('❌ Payment failed:', failedPayment.id);
-      break;
-      
-    default:
-      console.log(`⚡ Evento no manejado: ${event.type}`);
   }
 
   return new NextResponse(null, { status: 200 });
