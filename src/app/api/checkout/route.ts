@@ -1,4 +1,4 @@
-// src/app/api/checkout/route.ts - VERSIÓN SIMPLIFICADA
+// src/app/api/checkout/route.ts - VERSIÓN CORREGIDA
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 
@@ -25,10 +25,12 @@ export async function POST(request: Request) {
       quantity: item.cantidad || 1,
     }));
 
-    // ✅ URL dinámica para producción
+    // ✅ URL CORREGIDA - USA TU URL REAL
     const baseUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://tu-app.vercel.app'  // Cambia por tu URL real de Vercel
+      ? 'https://ia-ebook-store.vercel.app'  // ← ESTA ES TU URL REAL
       : 'http://localhost:3000';
+
+    console.log('🎯 Creando sesión con URL:', baseUrl);
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -38,13 +40,18 @@ export async function POST(request: Request) {
       cancel_url: `${baseUrl}/carrito`,
     });
 
+    console.log('✅ Sesión creada:');
+    console.log(' - ID:', session.id);
+    console.log(' - Success URL:', session.success_url);
+    console.log(' - Stripe URL:', session.url);
+
     return NextResponse.json({ 
       sessionId: session.id,
       url: session.url 
     });
     
   } catch (error) {
-    console.error('Checkout error:', error);
+    console.error('❌ Checkout error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
