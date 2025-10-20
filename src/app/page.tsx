@@ -61,6 +61,7 @@ export default function HomePage() {
       <HeroSection />
       
       {/* Sección de Carrousels */}
+      {*
       <section className="py-8">
         <div className="max-w-7xl mx-auto">
           
@@ -87,7 +88,7 @@ export default function HomePage() {
           
         </div>
       </section>
-
+     *}
       
     </main>
   );
