@@ -1,4 +1,4 @@
-// src/app/page.tsx
+// src/app/page.tsx - VERSIÓN CON CARROUSELS
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,12 +6,10 @@ import { supabase } from '@/lib/supabase';
 import { Libro } from '@/context/CarritoContext';
 import HeroSection from '@/components/HeroSection';
 import BookGrid from '@/components/BookGrid';
+import BookCarousel from '@/components/BookCarousel';
 import LoadingState from '@/components/LoadingState';
 import ErrorState from '@/components/ErrorState';
-
 import Link from 'next/link';
-
-// O si ya tienes Link importado, asegúrate de que esté disponible en todo el componente
 
 export default function HomePage() {
   const [libros, setLibros] = useState<Libro[]>([]);
@@ -50,6 +48,11 @@ export default function HomePage() {
     cargarLibros();
   }, []);
 
+  // Filtrar libros para diferentes secciones
+  const novedades = libros.slice(0, 8); // Primeros 8 libros como novedades
+  const destacados = libros.filter(libro => libro.precio > 5).slice(0, 8); // Libros > $5
+  const recomendados = libros.slice().sort(() => Math.random() - 0.5).slice(0, 8); // Aleatorios
+
   if (loading) return <LoadingState />;
   if (error) return <ErrorState error={error} />;
 
@@ -57,15 +60,43 @@ export default function HomePage() {
     <main className="min-h-screen bg-gray-50">
       <HeroSection />
       
-      {/* Catálogo de Libros */}
-      <section className="py-12">
+      {/* Sección de Carrousels */}
+      <section className="py-8">
+        <div className="max-w-7xl mx-auto">
+          
+          {/* Novedades */}
+          <BookCarousel 
+            titulo="🆕 Novedades" 
+            libros={novedades}
+            icono="🆕"
+          />
+          
+          {/* Destacados */}
+          <BookCarousel 
+            titulo="⭐ Libros Destacados" 
+            libros={destacados}
+            icono="⭐"
+          />
+          
+          {/* Recomendados */}
+          <BookCarousel 
+            titulo="💖 Recomendados para ti" 
+            libros={recomendados}
+            icono="💖"
+          />
+          
+        </div>
+      </section>
+
+      {/* Catálogo Completo (grid tradicional) */}
+      <section className="py-12 bg-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Nuestros Libros Destacados
+              Catálogo Completo
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Explora nuestra colección de libros únicos, disponibles en formato PDF y EPUB para tu comodidad.
+              Explora todos nuestros libros disponibles en formato PDF y EPUB.
             </p>
           </div>
 
@@ -73,7 +104,7 @@ export default function HomePage() {
 
           {/* Call to Action */}
           <div className="text-center mt-12">
-            <div className="bg-white rounded-lg shadow-md p-8 max-w-2xl mx-auto">
+            <div className="bg-gray-50 rounded-lg shadow-md p-8 max-w-2xl mx-auto">
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
                 ¿No encuentras lo que buscas?
               </h3>
