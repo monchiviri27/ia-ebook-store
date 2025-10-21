@@ -31,19 +31,21 @@ export default function BookCarouselCard({ libro }: BookCarouselCardProps) {
   };
 
   const handleDownload = async (formato: 'pdf' | 'epub', e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDownloading(formato);
-    try {
-      await descargarArchivo(
-        formato === 'pdf' ? libro.ruta_pdf : libro.ruta_epub,
-        formato,
-        libro.titulo
-      );
-    } finally {
-      setDownloading(null);
-    }
-  };
+  e.preventDefault();
+  e.stopPropagation();
+  setDownloading(formato);
+  try {
+    await descargarArchivo(
+      formato === 'pdf' ? libro.ruta_pdf : libro.ruta_epub,
+      formato,
+      libro.titulo,
+      libro.portada_url, // ← Nuevo parámetro
+      libro.autor        // ← Nuevo parámetro
+    );
+  } finally {
+    setDownloading(null);
+  }
+};
 
   return (
     <div className="group bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-200 overflow-hidden w-56 h-96 flex-shrink-0">

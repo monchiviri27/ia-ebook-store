@@ -50,19 +50,21 @@ export default function LibroDetailPage() {
   }, [id]);
 
   const handleDownload = async (formato: 'pdf' | 'epub') => {
-    if (!libro) return;
-    
-    setDownloading(formato);
-    try {
-      await descargarArchivo(
-        formato === 'pdf' ? libro.ruta_pdf : libro.ruta_epub,
-        formato,
-        libro.titulo
-      );
-    } finally {
-      setDownloading(null);
-    }
-  };
+  if (!libro) return;
+  
+  setDownloading(formato);
+  try {
+    await descargarArchivo(
+      formato === 'pdf' ? libro.ruta_pdf : libro.ruta_epub,
+      formato,
+      libro.titulo,
+      libro.portada_url, // ← Nuevo parámetro
+      libro.autor        // ← Nuevo parámetro
+    );
+  } finally {
+    setDownloading(null);
+  }
+};
 
   const handleAddToCart = () => {
     if (!libro) return;
