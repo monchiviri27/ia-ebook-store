@@ -1,4 +1,4 @@
-// src/app/checkout/page.tsx - VERSIÓN ACTUALIZADA
+// src/app/checkout/page.tsx - VERSIÓN CORREGIDA
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -14,13 +14,21 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (items.length === 0) {
-      addToast('Tu carrito está vacío', 'warning');
+      addToast({
+        type: 'warning',
+        title: 'Carrito vacío',
+        message: 'Tu carrito está vacío'
+      });
     }
   }, [items, addToast]);
 
   const handleCheckout = async () => {
     if (items.length === 0) {
-      addToast('Tu carrito está vacío', 'error');
+      addToast({
+        type: 'error',
+        title: 'Error',
+        message: 'Tu carrito está vacío'
+      });
       return;
     }
 
@@ -58,7 +66,11 @@ export default function CheckoutPage() {
 
     } catch (error) {
       console.error('Checkout error:', error);
-      addToast('Error al procesar el pago', 'error');
+      addToast({
+        type: 'error',
+        title: 'Error de pago',
+        message: 'Error al procesar el pago'
+      });
     } finally {
       setLoading(false);
     }
