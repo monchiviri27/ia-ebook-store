@@ -1,4 +1,4 @@
-// src/app/libros/[id]/page.tsx
+// src/app/libros/[id]/page.tsx - VERSIÓN CORREGIDA
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -50,26 +50,31 @@ export default function LibroDetailPage() {
   }, [id]);
 
   const handleDownload = async (formato: 'pdf' | 'epub') => {
-  if (!libro) return;
-  
-  setDownloading(formato);
-  try {
-    await descargarArchivo(
-      formato === 'pdf' ? libro.ruta_pdf : libro.ruta_epub,
-      formato,
-      libro.titulo,
-      libro.portada_url, // ← Nuevo parámetro
-      libro.autor        // ← Nuevo parámetro
-    );
-  } finally {
-    setDownloading(null);
-  }
-};
+    if (!libro) return;
+    
+    setDownloading(formato);
+    try {
+      await descargarArchivo(
+        formato === 'pdf' ? libro.ruta_pdf : libro.ruta_epub,
+        formato,
+        libro.titulo,
+        libro.portada_url,
+        libro.autor
+      );
+    } finally {
+      setDownloading(null);
+    }
+  };
 
   const handleAddToCart = () => {
     if (!libro) return;
     agregarAlCarrito(libro);
-    addToast(`"${libro.titulo}" agregado al carrito`, 'success');
+    // ✅ CORREGIDO: Usar objeto en lugar de argumentos separados
+    addToast({
+      type: 'success',
+      title: 'Libro agregado',
+      message: `"${libro.titulo}" agregado al carrito`
+    });
   };
 
   if (loading) {
@@ -233,7 +238,6 @@ export default function LibroDetailPage() {
         <div className="mt-12">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Libros que también te pueden gustar</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {/* Aquí podrías agregar libros del mismo género */}
             <div className="text-center text-gray-500 py-8">
               Próximamente: Libros relacionados
             </div>
