@@ -1,4 +1,4 @@
-// src/hooks/useDownload.ts - VERSIÓN CORREGIDA
+// hooks/useDownload.ts - CON NUEVAS NOTIFICACIONES
 import { useToast } from '@/context/ToastContext';
 
 export const useDownload = () => {
@@ -14,6 +14,14 @@ export const useDownload = () => {
     try {
       const nombreArchivo = titulo.replace(/[^a-z0-9]/gi, '_').toLowerCase();
       
+      // Notificación de inicio
+      addToast({
+        type: 'info',
+        title: 'Iniciando descarga...',
+        message: `Preparando "${titulo}"`,
+        duration: 2000,
+      });
+
       const response = await fetch(rutaArchivo);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -26,15 +34,25 @@ export const useDownload = () => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       
-      // Mensaje mejorado con información útil
-      addToast(
-        `"${titulo}" descargado en formato ${formato.toUpperCase()} ✅\nÁbrelo con Adobe Acrobat o Calibre para mejor experiencia.`,
-        'success'
-      );
+      // Notificación de éxito
+      addToast({
+        type: 'success',
+        title: '✅ Descarga completada',
+        message: `"${titulo}" en formato ${formato.toUpperCase()}`,
+        duration: 4000,
+      });
       
     } catch (error) {
       console.error('Error al descargar:', error);
-      addToast(`Error al descargar "${titulo}"`, 'error');
+      
+      // Notificación de error
+      addToast({
+        type: 'error',
+        title: '❌ Error en descarga',
+        message: `No se pudo descargar "${titulo}"`,
+        duration: 5000,
+      });
+      
       window.open(rutaArchivo, '_blank');
     }
   };
