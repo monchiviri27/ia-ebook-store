@@ -1,11 +1,11 @@
-// src/components/Header.tsx
+// src/components/Header.tsx - VERSIÓN MEJORADA
 'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCarrito } from '@/context/CarritoContext';
-import BusquedaModal from './BusquedaModal'; // DESCOMENTADO
+import BusquedaModal from './BusquedaModal';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -65,8 +65,8 @@ export default function Header() {
           </nav>
 
           {/* Right Section - Search & User */}
-          <div className="hidden md:flex items-center space-x-4">
-            {/* Search Button */}
+          <div className="flex items-center space-x-4">
+            {/* Search Button - Visible en desktop y móvil */}
             <button 
               className="p-2 text-gray-600 hover:text-blue-600 transition-colors"
               title="Buscar libros"
@@ -77,7 +77,7 @@ export default function Header() {
               </svg>
             </button>
 
-            {/* Cart */}
+            {/* Cart - SIEMPRE VISIBLE, incluso en móvil */}
             <Link 
               href="/carrito" 
               className="p-2 text-gray-600 hover:text-blue-600 transition-colors relative"
@@ -93,24 +93,23 @@ export default function Header() {
               )}
             </Link>
 
+            {/* Mobile Menu Button - Ahora separado del carrito */}
+            <button
+              onClick={toggleMenu}
+              className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+              aria-label="Abrir menú"
+            >
+              {isMenuOpen ? (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
           </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={toggleMenu}
-            className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
-            aria-label="Abrir menú"
-          >
-            {isMenuOpen ? (
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            )}
-          </button>
         </div>
 
         {/* Mobile Menu */}
@@ -133,39 +132,7 @@ export default function Header() {
                 </Link>
               ))}
               
-              {/* Mobile Cart Link */}
-              <Link
-                href="/carrito"
-                onClick={() => setIsMenuOpen(false)}
-                className="px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-between hover:bg-gray-50"
-              >
-                <span className="flex items-center space-x-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5.5M7 13l2.5 5.5m0 0L17 21" />
-                  </svg>
-                  <span>Carrito</span>
-                </span>
-                {cantidadTotal > 0 && (
-                  <span className="bg-blue-600 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">
-                    {cantidadTotal}
-                  </span>
-                )}
-              </Link>
-
-              {/* Mobile Search */}
-              <button 
-                onClick={() => {
-                  openSearch();
-                  setIsMenuOpen(false);
-                }}
-                className="px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 hover:bg-gray-50 text-gray-700"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <span>Buscar</span>
-              </button>
-
+              {/* Mobile Search - Ya no necesario, está en el header */}
               {/* Mobile Admin Link */}
               <Link
                 href="/admin"
@@ -182,7 +149,7 @@ export default function Header() {
           </div>
         )}
 
-        {/* BusquedaModal - DESCOMENTADO */}
+        {/* BusquedaModal */}
         <BusquedaModal 
           isOpen={isSearchOpen} 
           onClose={() => setIsSearchOpen(false)} 
