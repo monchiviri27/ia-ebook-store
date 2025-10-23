@@ -142,18 +142,18 @@ async function guardarOrdenEnDB(session: Stripe.Checkout.Session, stripeSession:
     console.log('📋 Procesando line items:', lineItems.length);
     
     // ✅ CORREGIDO: Agregar tipo para 'item'
-    const items = lineItems.map((item: any, index) => {
-      const product = item.price?.product as Stripe.Product;
-      console.log(`   Item ${index + 1}:`, product?.name || 'Sin nombre');
-      
-      return {
-        libro_id: product?.id || 'unknown',
-        titulo: product?.name || 'Libro sin título',
-        precio: item.price?.unit_amount ? item.price.unit_amount / 100 : 0,
-        cantidad: item.quantity || 1,
-        portada_url: product?.images?.[0] || ''
-      };
-    });
+    const items = lineItems.map((item: any, index: number) => {
+  const product = item.price?.product as Stripe.Product;
+  console.log(`   Item ${index + 1}:`, product?.name || 'Sin nombre');
+  
+  return {
+    libro_id: product?.id || 'unknown',
+    titulo: product?.name || 'Libro sin título',
+    precio: item.price?.unit_amount ? item.price.unit_amount / 100 : 0,
+    cantidad: item.quantity || 1,
+    portada_url: product?.images?.[0] || ''
+  };
+});
 
     const ordenData = {
       stripe_session_id: session.id,
