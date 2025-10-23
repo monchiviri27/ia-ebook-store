@@ -1,4 +1,4 @@
-// src/app/success/SuccessContent.tsx - VERSIÓN MEJORADA
+// src/app/success/SuccessContent.tsx - VERSIÓN CON DESCARGAS FUNCIONALES
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -65,6 +65,7 @@ export default function SuccessContent() {
   const [error, setError] = useState('');
   const [carritoVaciado, setCarritoVaciado] = useState(false);
   const [intentos, setIntentos] = useState(0);
+  const [descargando, setDescargando] = useState<string | null>(null);
 
   // Vaciar carrito
   useEffect(() => {
@@ -154,57 +155,92 @@ export default function SuccessContent() {
     cargarDatosCompra();
   }, [sessionId, intentos]);
 
-  // Función para manejar descargas
+  // ✅ FUNCIÓN DE DESCARGA MEJORADA
   const manejarDescarga = async (libroId: string, formato: 'pdf' | 'epub') => {
     try {
+      console.log(`📥 Iniciando descarga ${formato} para libro: ${libroId}`);
+      setDescargando(`${libroId}-${formato}`);
+      
+      // 1. Buscar la descarga en el estado local
       const descarga = descargas.find(d => d.libro_id === libroId);
       
       if (!descarga) {
         alert('No se encontró información de descarga para este libro');
+        setDescargando(null);
         return;
       }
 
       if (descarga.descargas_usadas >= descarga.descargas_disponibles) {
         alert('Has agotado tus descargas disponibles para este libro');
+        setDescargando(null);
         return;
       }
 
-      console.log(`📥 Descargando ${formato} para libro: ${libroId}`);
-      
-      const libro = orden?.items.find(item => item.libro_id === libroId);
-      if (libro) {
-        // Simular descarga
-        const link = document.createElement('a');
-        link.href = `#`;
-        link.download = `${libro.titulo}.${formato}`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+      // 2. Buscar el libro COMPLETO en la base de datos para obtener las rutas reales
+      const { data: libroCompleto, error: libroError } = await supabase
+        .from('libros')
+        .select('*')
+        .eq('id', libroId)
+        .single();
 
-        // Actualizar contador si no es una orden temporal
-        if (!descarga.id.startsWith('temp-')) {
-          const { error: updateError } = await supabase
-            .from('descargas')
-            .update({
-              descargas_usadas: descarga.descargas_usadas + 1
-            })
-            .eq('id', descarga.id);
-
-          if (!updateError) {
-            setDescargas(prev => prev.map(d => 
-              d.id === descarga.id 
-                ? { ...d, descargas_usadas: d.descargas_usadas + 1 }
-                : d
-            ));
-          }
-        }
-
-        alert(`✅ Descarga de ${formato} iniciada para: ${libro.titulo}`);
+      if (libroError || !libroCompleto) {
+        console.error('❌ Error buscando libro:', libroError);
+        alert('Error: No se pudo encontrar la información del libro');
+        setDescargando(null);
+        return;
       }
 
+      // 3. Obtener la ruta correcta según el formato
+      const rutaArchivo = formato === 'pdf' ? libroCompleto.ruta_pdf : libroCompleto.ruta_epub;
+      
+      if (!rutaArchivo) {
+        alert(`Lo sentimos, el formato ${formato.toUpperCase()} no está disponible para este libro`);
+        setDescargando(null);
+        return;
+      }
+
+      console.log('📁 Ruta del archivo:', rutaArchivo);
+
+      // 4. Crear enlace de descarga
+      const link = document.createElement('a');
+      link.href = rutaArchivo;
+      link.download = `${libroCompleto.titulo}.${formato}`;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      
+      // 5. Ejecutar descarga
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // 6. Actualizar contador de descargas (solo si no es orden temporal)
+      if (!descarga.id.startsWith('temp-')) {
+        const { error: updateError } = await supabase
+          .from('descargas')
+          .update({
+            descargas_usadas: descarga.descargas_usadas + 1
+          })
+          .eq('id', descarga.id);
+
+        if (!updateError) {
+          // Actualizar estado local
+          setDescargas(prev => prev.map(d => 
+            d.id === descarga.id 
+              ? { ...d, descargas_usadas: d.descargas_usadas + 1 }
+              : d
+          ));
+          console.log('✅ Contador de descargas actualizado');
+        }
+      }
+
+      // 7. Mensaje de confirmación
+      alert(`✅ Descarga de ${formato.toUpperCase()} iniciada para: "${libroCompleto.titulo}"`);
+
     } catch (error) {
-      console.error('Error en descarga:', error);
-      alert('Error al procesar la descarga');
+      console.error('❌ Error en descarga:', error);
+      alert('Error al procesar la descarga. Intenta nuevamente.');
+    } finally {
+      setDescargando(null);
     }
   };
 
@@ -327,18 +363,26 @@ export default function SuccessContent() {
                   <div className="flex gap-3 flex-shrink-0">
                     <button
                       onClick={() => manejarDescarga(item.libro_id, 'pdf')}
-                      disabled={descargasRestantes <= 0}
-                      className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                      disabled={descargasRestantes <= 0 || descargando === `${item.libro_id}-pdf`}
+                      className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2 min-w-20 justify-center"
                     >
-                      📥 PDF
+                      {descargando === `${item.libro_id}-pdf` ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      ) : (
+                        '📥 PDF'
+                      )}
                     </button>
                     
                     <button
                       onClick={() => manejarDescarga(item.libro_id, 'epub')}
-                      disabled={descargasRestantes <= 0}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                      disabled={descargasRestantes <= 0 || descargando === `${item.libro_id}-epub`}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2 min-w-20 justify-center"
                     >
-                      📥 EPUB
+                      {descargando === `${item.libro_id}-epub` ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      ) : (
+                        '📥 EPUB'
+                      )}
                     </button>
                   </div>
                 </div>
@@ -360,12 +404,12 @@ export default function SuccessContent() {
               <span>Puedes descargar cada libro hasta 3 veces</span>
             </div>
             <div className="flex items-start gap-2">
-              <span>📧</span>
-              <span>Hemos enviado un email de confirmación</span>
+              <span>💾</span>
+              <span>Formatos disponibles: PDF y EPUB</span>
             </div>
             <div className="flex items-start gap-2">
               <span>🆘</span>
-              <span>¿Problemas? Contacta a soporte@iaebookstore.com</span>
+              <span>¿Problemas? Recarga la página o contacta soporte</span>
             </div>
           </div>
         </div>
