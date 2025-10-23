@@ -15,6 +15,12 @@ export async function POST(req: Request) {
   console.log('🔐 Signature:', signature ? 'PRESENT' : 'MISSING');
   console.log('🔑 STRIPE_WEBHOOK_SECRET:', process.env.STRIPE_WEBHOOK_SECRET ? 'SET' : 'NOT SET');
 
+  // ✅ CORREGIDO: Validar que signature no sea null
+  if (!signature) {
+    console.error('❌ Stripe signature missing');
+    return new NextResponse('Stripe signature missing', { status: 400 });
+  }
+
   if (!process.env.STRIPE_WEBHOOK_SECRET) {
     console.error('❌ STRIPE_WEBHOOK_SECRET no está configurado');
     return new NextResponse('Webhook secret missing', { status: 500 });
@@ -23,9 +29,10 @@ export async function POST(req: Request) {
   let event: Stripe.Event;
 
   try {
+    // ✅ CORREGIDO: Ahora signature no puede ser null
     event = stripe.webhooks.constructEvent(
       body,
-      signature,
+      signature, // ← Ahora es string, no string | null
       process.env.STRIPE_WEBHOOK_SECRET
     );
     console.log('✅ Evento verificado:', event.type);
@@ -33,6 +40,8 @@ export async function POST(req: Request) {
     console.error('❌ Firma de webhook inválida:', error);
     return new NextResponse('Webhook signature verification failed', { status: 400 });
   }
+
+
 
   console.log(`🔔 Webhook recibido: ${event.type}`);
 
