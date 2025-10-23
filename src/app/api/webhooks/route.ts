@@ -1,4 +1,4 @@
-// src/app/api/webhooks/route.ts - VERSIÓN MEJORADA
+// src/app/api/webhooks/route.ts - VERSIÓN COMPLETAMENTE CORREGIDA
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     // ✅ CORREGIDO: Ahora signature no puede ser null
     event = stripe.webhooks.constructEvent(
       body,
-      signature, // ← Ahora es string, no string | null
+      signature,
       process.env.STRIPE_WEBHOOK_SECRET
     );
     console.log('✅ Evento verificado:', event.type);
@@ -40,8 +40,6 @@ export async function POST(req: Request) {
     console.error('❌ Firma de webhook inválida:', error);
     return new NextResponse('Webhook signature verification failed', { status: 400 });
   }
-
-
 
   console.log(`🔔 Webhook recibido: ${event.type}`);
 
@@ -69,11 +67,16 @@ export async function POST(req: Request) {
 
   } catch (error) {
     console.error('❌ Error procesando webhook:', error);
-    console.error('❌ Stack trace:', error.stack);
+    
+    // ✅ CORREGIDO: Type casting para error
+    if (error instanceof Error) {
+      console.error('❌ Stack trace:', error.stack);
+    }
+    
     return new NextResponse(
       JSON.stringify({ 
         error: 'Webhook processing failed',
-        details: error.message 
+        details: error instanceof Error ? error.message : 'Unknown error'
       }), 
       { status: 500 }
     );
@@ -109,7 +112,9 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     
   } catch (error) {
     console.error('❌ Error en handleCheckoutSessionCompleted:', error);
-    console.error('❌ Stack:', error.stack);
+    if (error instanceof Error) {
+      console.error('❌ Stack:', error.stack);
+    }
     throw error;
   }
 }
@@ -185,7 +190,7 @@ async function guardarOrdenEnDB(session: Stripe.Checkout.Session, stripeSession:
   }
 }
 
-// ✅ MANEJAR USUARIO (igual que antes)
+// ✅ MANEJAR USUARIO
 async function manejarUsuario(email: string, sessionId: string, orden: any) {
   console.log('👤 Manejando usuario:', email);
   
@@ -242,7 +247,7 @@ async function manejarUsuario(email: string, sessionId: string, orden: any) {
   }
 }
 
-// ✅ HABILITAR DESCARGAS (igual que antes)
+// ✅ HABILITAR DESCARGAS
 async function habilitarDescargas(email: string, sessionId: string, orden: any) {
   console.log('🔓 Habilitando descargas para:', email);
   
@@ -276,7 +281,7 @@ async function habilitarDescargas(email: string, sessionId: string, orden: any) 
   }
 }
 
-// ✅ ENVIAR EMAIL (igual que antes)
+// ✅ ENVIAR EMAIL
 async function enviarEmailConfirmacion(email: string, sessionId: string, orden: any, tipoUsuario: string) {
   console.log('📧 Enviando email de confirmación a:', email);
   
