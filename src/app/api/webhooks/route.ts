@@ -85,41 +85,37 @@ export async function POST(req: Request) {
 
 // ✅ FUNCIÓN PRINCIPAL MEJORADA
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
-  console.log('=== 🚨 handleCheckoutSessionCompleted INICIADO ===');
-  console.log('Session ID:', session.id);
-  console.log('Customer email:', session.customer_email);
+  console.log('=== 🚨 WEBHOOK handleCheckoutSessionCompleted INICIADO ===');
+  console.log('📧 Email del cliente:', session.customer_email);
+  console.log('🆔 Session ID:', session.id);
   
   try {
-    // PASO 1: Verificar sesión de Stripe
-    console.log('🔍 Paso 1: Recuperando sesión de Stripe...');
-    const stripeSession = await stripe.checkout.sessions.retrieve(session.id, {
-      expand: ['line_items.data.price.product']
-    });
-    console.log('✅ Sesión recuperada');
-    console.log('📦 Line items count:', stripeSession.line_items?.data?.length || 0);
+    // PASO 1: Guardar orden
+    console.log('1. 💾 Guardando orden...');
+    const orden = await guardarOrdenEnDB(session);
+    console.log('1. ✅ Orden guardada ID:', orden.id);
 
-    // PASO 2: Guardar orden en BD
-    console.log('💾 Paso 2: Guardando orden en Supabase...');
-    const orden = await guardarOrdenEnDB(session, stripeSession);
-    console.log('✅ Orden guardada con ID:', orden.id);
-    
-    // PASO 3: Verificar que tenemos email para descargas
-    if (session.customer_email) {
-      console.log('👤 Paso 3: Manejando usuario y descargas...');
-      console.log('📧 Email disponible:', session.customer_email);
-      await manejarUsuario(session.customer_email, session.id, orden);
-    } else {
-      console.log('❌ NO hay customer_email, no se pueden crear descargas');
+    // PASO 2: Verificar si tenemos email
+    if (!session.customer_email) {
+      console.log('❌ SALIENDO: No hay customer_email');
+      return;
     }
-    
-    console.log('✅ Procesamiento del pago completado correctamente');
-    
+
+    console.log('2. 👤 Manejando usuario...');
+    await manejarUsuario(session.customer_email, session.id, orden);
+    console.log('2. ✅ Usuario manejado');
+
+    console.log('3. 🔓 Habilitando descargas...');
+    await habilitarDescargas(session.customer_email, session.id, orden);
+    console.log('3. ✅ Descargas habilitadas');
+
+    console.log('🎉 WEBHOOK COMPLETADO EXITOSAMENTE');
+
   } catch (error) {
-    console.error('❌ Error en handleCheckoutSessionCompleted:', error);
+    console.error('❌ ERROR CRÍTICO EN WEBHOOK:', error);
     if (error instanceof Error) {
       console.error('❌ Stack:', error.stack);
     }
-    throw error;
   }
 }
 
