@@ -1,4 +1,4 @@
-// src/app/api/webhooks/route.ts - VERSIÓN COMPLETAMENTE CORREGIDA
+// src/app/api/webhooks/route.ts - VERSIÓN COMPLETA CORREGIDA
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
@@ -13,9 +13,7 @@ export async function POST(req: Request) {
 
   console.log('📦 Body length:', body.length);
   console.log('🔐 Signature:', signature ? 'PRESENT' : 'MISSING');
-  console.log('🔑 STRIPE_WEBHOOK_SECRET:', process.env.STRIPE_WEBHOOK_SECRET ? 'SET' : 'NOT SET');
 
-  // ✅ CORREGIDO: Validar que signature no sea null
   if (!signature) {
     console.error('❌ Stripe signature missing');
     return new NextResponse('Stripe signature missing', { status: 400 });
@@ -29,7 +27,6 @@ export async function POST(req: Request) {
   let event: Stripe.Event;
 
   try {
-    // ✅ CORREGIDO: Ahora signature no puede ser null
     event = stripe.webhooks.constructEvent(
       body,
       signature,
@@ -41,20 +38,24 @@ export async function POST(req: Request) {
     return new NextResponse('Webhook signature verification failed', { status: 400 });
   }
 
-  console.log(`🔔 Webhook recibido: ${event.type}`);
-
   try {
+    console.log(`🔔 Webhook recibido: ${event.type}`);
+    console.log('🔍 Event ID:', event.id);
+    
     switch (event.type) {
       case 'checkout.session.completed':
-        console.log('🎯 Procesando checkout.session.completed...');
+        console.log('🎯 EJECUTANDO checkout.session.completed...');
         await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
+        console.log('✅ checkout.session.completed COMPLETADO');
         break;
       
       case 'checkout.session.async_payment_succeeded':
+        console.log('🔄 Ejecutando async_payment_succeeded...');
         await handlePaymentSucceeded(event.data.object as Stripe.Checkout.Session);
         break;
       
       case 'checkout.session.async_payment_failed':
+        console.log('💀 Ejecutando async_payment_failed...');
         await handlePaymentFailed(event.data.object as Stripe.Checkout.Session);
         break;
       
@@ -67,12 +68,9 @@ export async function POST(req: Request) {
 
   } catch (error) {
     console.error('❌ Error procesando webhook:', error);
-    
-    // ✅ CORREGIDO: Type casting para error
     if (error instanceof Error) {
       console.error('❌ Stack trace:', error.stack);
     }
-    
     return new NextResponse(
       JSON.stringify({ 
         error: 'Webhook processing failed',
@@ -83,7 +81,6 @@ export async function POST(req: Request) {
   }
 }
 
-// ✅ FUNCIÓN PRINCIPAL MEJORADA
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   console.log('=== 🚨 WEBHOOK handleCheckoutSessionCompleted INICIADO ===');
   console.log('📧 Email del cliente:', session.customer_email);
@@ -116,44 +113,34 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     if (error instanceof Error) {
       console.error('❌ Stack:', error.stack);
     }
+    throw error;
   }
 }
 
-// ✅ GUARDAR ORDEN MEJORADO
-// ✅ GUARDAR ORDEN MEJORADO (VERSIÓN CORREGIDA)
-async function guardarOrdenEnDB(session: Stripe.Checkout.Session, stripeSession: any) {
+async function guardarOrdenEnDB(session: Stripe.Checkout.Session) {
   console.log('💾 Guardando orden en la base de datos...');
   
   try {
-    // Verificar si la orden ya existe
-    const { data: ordenExistente } = await supabase
-      .from('ordenes')
-      .select('id')
-      .eq('stripe_session_id', session.id)
-      .single();
-
-    if (ordenExistente) {
-      console.log('⚠️ Orden ya existe:', session.id);
-      return ordenExistente;
-    }
+    const stripeSession = await stripe.checkout.sessions.retrieve(session.id, {
+      expand: ['line_items.data.price.product']
+    });
 
     const lineItems = stripeSession.line_items?.data || [];
     
     console.log('📋 Procesando line items:', lineItems.length);
     
-    // ✅ CORREGIDO: Agregar tipo para 'item'
     const items = lineItems.map((item: any, index: number) => {
-  const product = item.price?.product as Stripe.Product;
-  console.log(`   Item ${index + 1}:`, product?.name || 'Sin nombre');
-  
-  return {
-    libro_id: product?.id || 'unknown',
-    titulo: product?.name || 'Libro sin título',
-    precio: item.price?.unit_amount ? item.price.unit_amount / 100 : 0,
-    cantidad: item.quantity || 1,
-    portada_url: product?.images?.[0] || ''
-  };
-});
+      const product = item.price?.product as Stripe.Product;
+      console.log(`   Item ${index + 1}:`, product?.name || 'Sin nombre');
+      
+      return {
+        libro_id: product?.id || 'unknown',
+        titulo: product?.name || 'Libro sin título',
+        precio: item.price?.unit_amount ? item.price.unit_amount / 100 : 0,
+        cantidad: item.quantity || 1,
+        portada_url: product?.images?.[0] || ''
+      };
+    });
 
     const ordenData = {
       stripe_session_id: session.id,
@@ -178,8 +165,6 @@ async function guardarOrdenEnDB(session: Stripe.Checkout.Session, stripeSession:
       console.error('❌ Error guardando orden en Supabase:');
       console.error('   Code:', error.code);
       console.error('   Message:', error.message);
-      console.error('   Details:', error.details);
-      console.error('   Hint:', error.hint);
       throw new Error(`Error guardando orden: ${error.message}`);
     }
 
@@ -192,7 +177,6 @@ async function guardarOrdenEnDB(session: Stripe.Checkout.Session, stripeSession:
   }
 }
 
-// ✅ MANEJAR USUARIO
 async function manejarUsuario(email: string, sessionId: string, orden: any) {
   console.log('👤 Manejando usuario:', email);
   
@@ -241,55 +225,45 @@ async function manejarUsuario(email: string, sessionId: string, orden: any) {
       console.log('✅ Nuevo usuario GUEST creado:', email);
     }
 
-    await habilitarDescargas(email, sessionId, orden);
-    await enviarEmailConfirmacion(email, sessionId, orden, usuarioExistente?.tipo || 'guest');
-
   } catch (error) {
     console.error('❌ Error en manejarUsuario:', error);
   }
 }
 
-// ✅ HABILITAR DESCARGAS
 async function habilitarDescargas(email: string, sessionId: string, orden: any) {
-  console.log('=== 🔓 HABILITAR DESCARGAS INICIADO ===');
-  console.log('📧 Email:', email);
-  console.log('🆔 Session ID:', sessionId);
-  console.log('📦 Orden:', JSON.stringify(orden, null, 2));
+  console.log('🔓 Habilitando descargas para:', email);
+  console.log('📦 Orden recibida:', orden);
+  console.log('📚 Items en orden:', orden?.items?.length);
   
   try {
-    if (!orden || !orden.items) {
-      console.log('❌ No hay orden o items en la orden');
-      return;
-    }
-
-    console.log(`🔄 Procesando ${orden.items.length} items...`);
-    
-    for (const [index, item] of orden.items.entries()) {
-      console.log(`   📖 Item ${index + 1}:`, item);
+    if (orden && orden.items) {
+      console.log(`🔄 Procesando ${orden.items.length} items...`);
       
-      const descargaData = {
-        usuario_email: email,
-        libro_id: item.libro_id,
-        libro_titulo: item.titulo,
-        sesion_id: sessionId,
-        descargas_disponibles: 3,
-        descargas_usadas: 0,
-        expira_en: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-      };
+      for (const item of orden.items) {
+        console.log(`   📖 Procesando: ${item.titulo} (ID: ${item.libro_id})`);
+        
+        const descargaData = {
+          usuario_email: email,
+          libro_id: item.libro_id,
+          libro_titulo: item.titulo,
+          sesion_id: sessionId,
+          descargas_disponibles: 3,
+          descargas_usadas: 0,
+          expira_en: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        };
 
-      console.log('   💾 Insertando descarga:', descargaData);
-      
-      const { data, error: descargaError } = await supabase
-        .from('descargas')
-        .insert([descargaData])
-        .select();
+        console.log('   💾 Insertando descarga:', descargaData);
+        
+        const { data, error: descargaError } = await supabase
+          .from('descargas')
+          .insert([descargaData])
+          .select();
 
-      if (descargaError) {
-        console.error('   ❌ Error insertando descarga:', descargaError);
-        console.error('   ❌ Detalles:', descargaError.details);
-        console.error('   ❌ Hint:', descargaError.hint);
-      } else {
-        console.log('   ✅ Descarga insertada:', data);
+        if (descargaError) {
+          console.error('   ❌ Error insertando descarga:', descargaError);
+        } else {
+          console.log('   ✅ Descarga insertada:', data);
+        }
       }
     }
 
@@ -300,73 +274,11 @@ async function habilitarDescargas(email: string, sessionId: string, orden: any) 
   }
 }
 
-// ✅ ENVIAR EMAIL
 async function enviarEmailConfirmacion(email: string, sessionId: string, orden: any, tipoUsuario: string) {
-  console.log('📧 Enviando email de confirmación a:', email);
-  
-  try {
-    const esGuest = tipoUsuario === 'guest';
-    
-    if (process.env.RESEND_API_KEY) {
-      const { Resend } = await import('resend');
-      const resend = new Resend(process.env.RESEND_API_KEY);
-
-      const { data, error } = await resend.emails.send({
-        from: 'IA eBook Store <onboarding@resend.dev>',
-        to: email,
-        subject: '✅ Confirmación de tu compra - IA eBook Store',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h1 style="color: #10B981;">¡Gracias por tu compra!</h1>
-            <p>Tu pedido ha sido procesado exitosamente.</p>
-            
-            <div style="background: #F3F4F6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h3>Detalles de tu orden:</h3>
-              <p><strong>ID de orden:</strong> ${sessionId}</p>
-              <p><strong>Total:</strong> $${orden.amount_total} ${orden.currency}</p>
-              <p><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-ES')}</p>
-            </div>
-
-            <div style="margin: 20px 0;">
-              <h3>📚 Libros comprados:</h3>
-              <ul>
-                ${orden.items.map((item: any) => 
-                  `<li><strong>${item.titulo}</strong> - $${item.precio} x ${item.cantidad}</li>`
-                ).join('')}
-              </ul>
-            </div>
-
-            <div style="background: #DBEAFE; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <p><strong>🔓 Acceso a descargas:</strong></p>
-              <p>Puedes descargar tus libros desde:</p>
-              <p><a href="https://ia-ebook-store.vercel.app/success?session_id=${sessionId}" 
-                   style="color: #2563EB; text-decoration: none; font-weight: bold;">
-                   https://ia-ebook-store.vercel.app/success?session_id=${sessionId}
-              </a></p>
-            </div>
-
-            <p style="margin-top: 20px; color: #6B7280;">
-              Si tienes algún problema con tu descarga, contáctanos en soporte@iaebookstore.com
-            </p>
-          </div>
-        `
-      });
-
-      if (error) {
-        console.error('❌ Error enviando email con Resend:', error);
-      } else {
-        console.log('✅ Email enviado exitosamente via Resend');
-      }
-    } else {
-      console.log('ℹ️ RESEND_API_KEY no configurada - Email simulado');
-    }
-
-  } catch (error) {
-    console.error('❌ Error en enviarEmailConfirmacion:', error);
-  }
+  console.log('📧 Email simulado para:', email);
+  return true;
 }
 
-// ✅ FUNCIONES RESTANTES
 async function handlePaymentSucceeded(session: Stripe.Checkout.Session) {
   console.log('✅ Pago asíncrono exitoso:', session.id);
   await handleCheckoutSessionCompleted(session);
