@@ -126,6 +126,12 @@ export default function SuccessContent() {
 
   // ✅ FUNCIÓN DE DESCARGA QUE SÍ FUNCIONA
  const manejarDescarga = async (libroId: string, formato: 'pdf' | 'epub') => {
+  // ✅ VALIDAR que orden no sea null
+  if (!orden) {
+    alert('Error: No hay información de orden disponible');
+    return;
+  }
+
   try {
     setDescargando(`${libroId}-${formato}`);
     
