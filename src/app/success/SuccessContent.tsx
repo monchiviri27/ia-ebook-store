@@ -125,46 +125,74 @@ export default function SuccessContent() {
   };
 
   // ✅ FUNCIÓN DE DESCARGA QUE SÍ FUNCIONA
-  const manejarDescarga = async (libroId: string, formato: 'pdf' | 'epub') => {
-    try {
-      setDescargando(`${libroId}-${formato}`);
-      
-      // Buscar libro en Supabase
-      const { data: libro } = await supabase
-        .from('libros')
-        .select('*')
-        .eq('id', libroId)
-        .single();
-
-      if (!libro) {
-        alert('Libro no encontrado');
-        return;
-      }
-
-      const rutaArchivo = formato === 'pdf' ? libro.ruta_pdf : libro.ruta_epub;
-      
-      if (!rutaArchivo) {
-        alert(`Formato ${formato} no disponible`);
-        return;
-      }
-
-      // Descargar archivo
-      const link = document.createElement('a');
-      link.href = rutaArchivo;
-      link.download = `${libro.titulo}.${formato}`;
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      alert(`✅ Descargando: ${libro.titulo}`);
-
-    } catch (error) {
-      alert('Error en descarga');
-    } finally {
-      setDescargando(null);
+ const manejarDescarga = async (libroId: string, formato: 'pdf' | 'epub') => {
+  try {
+    setDescargando(`${libroId}-${formato}`);
+    
+    // 1. Encontrar el libro en el JSON de items de la orden
+    const itemOrden = orden.items.find((item: any) => item.libro_id === libroId);
+    
+    if (!itemOrden) {
+      console.log('❌ Item no encontrado en orden:', libroId);
+      console.log('📦 Items disponibles:', orden.items);
+      alert('No se encontró el libro en tu orden');
+      return;
     }
-  };
+
+    console.log('📖 Buscando libro:', itemOrden.titulo);
+
+    // 2. Buscar en la base de datos por TÍTULO
+    const { data: libro, error } = await supabase
+      .from('libros')
+      .select('*')
+      .eq('titulo', itemOrden.titulo)
+      .single();
+
+    if (error || !libro) {
+      console.error('❌ Error buscando libro:', error);
+      alert(`Libro "${itemOrden.titulo}" no encontrado en la base de datos`);
+      return;
+    }
+
+    // 3. Obtener la ruta del archivo
+    const rutaArchivo = formato === 'pdf' ? libro.ruta_pdf : libro.ruta_epub;
+    
+    if (!rutaArchivo) {
+      alert(`Formato ${formato.toUpperCase()} no disponible para "${libro.titulo}"`);
+      return;
+    }
+
+    console.log('📁 Descargando desde:', rutaArchivo);
+
+    // 4. Descargar archivo
+    const link = document.createElement('a');
+    link.href = rutaArchivo;
+    link.download = `${libro.titulo}.${formato}`;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    alert(`✅ Descargando: ${libro.titulo}`);
+
+    // 5. Actualizar contador de descargas
+    const descarga = descargas.find(d => d.libro_id === libroId);
+    if (descarga && !descarga.id.startsWith('temp-')) {
+      await supabase
+        .from('descargas')
+        .update({
+          descargas_usadas: descarga.descargas_usadas + 1
+        })
+        .eq('id', descarga.id);
+    }
+
+  } catch (error) {
+    console.error('Error en descarga:', error);
+    alert('Error al procesar la descarga');
+  } finally {
+    setDescargando(null);
+  }
+};
 
   if (loading) {
     return <div className="min-h-screen bg-green-50 flex items-center justify-center">Cargando...</div>;
