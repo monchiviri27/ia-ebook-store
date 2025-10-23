@@ -251,32 +251,49 @@ async function manejarUsuario(email: string, sessionId: string, orden: any) {
 
 // ✅ HABILITAR DESCARGAS
 async function habilitarDescargas(email: string, sessionId: string, orden: any) {
-  console.log('🔓 Habilitando descargas para:', email);
+  console.log('=== 🔓 HABILITAR DESCARGAS INICIADO ===');
+  console.log('📧 Email:', email);
+  console.log('🆔 Session ID:', sessionId);
+  console.log('📦 Orden:', JSON.stringify(orden, null, 2));
   
   try {
-    if (orden && orden.items) {
-      for (const item of orden.items) {
-        const { error: descargaError } = await supabase
-          .from('descargas')
-          .insert([{
-            usuario_email: email,
-            libro_id: item.libro_id,
-            libro_titulo: item.titulo,
-            sesion_id: sessionId,
-            descargas_disponibles: 3,
-            descargas_usadas: 0,
-            expira_en: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-          }]);
+    if (!orden || !orden.items) {
+      console.log('❌ No hay orden o items en la orden');
+      return;
+    }
 
-        if (descargaError) {
-          console.error('❌ Error creando registro de descarga:', descargaError);
-        } else {
-          console.log(`✅ Descarga habilitada para: ${item.titulo}`);
-        }
+    console.log(`🔄 Procesando ${orden.items.length} items...`);
+    
+    for (const [index, item] of orden.items.entries()) {
+      console.log(`   📖 Item ${index + 1}:`, item);
+      
+      const descargaData = {
+        usuario_email: email,
+        libro_id: item.libro_id,
+        libro_titulo: item.titulo,
+        sesion_id: sessionId,
+        descargas_disponibles: 3,
+        descargas_usadas: 0,
+        expira_en: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      };
+
+      console.log('   💾 Insertando descarga:', descargaData);
+      
+      const { data, error: descargaError } = await supabase
+        .from('descargas')
+        .insert([descargaData])
+        .select();
+
+      if (descargaError) {
+        console.error('   ❌ Error insertando descarga:', descargaError);
+        console.error('   ❌ Detalles:', descargaError.details);
+        console.error('   ❌ Hint:', descargaError.hint);
+      } else {
+        console.log('   ✅ Descarga insertada:', data);
       }
     }
 
-    console.log('✅ Descargas habilitadas correctamente para:', email);
+    console.log('✅ Proceso de descargas completado');
 
   } catch (error) {
     console.error('❌ Error en habilitarDescargas:', error);
