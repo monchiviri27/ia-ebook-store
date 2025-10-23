@@ -1,4 +1,4 @@
-// src/app/api/webhooks/route.ts - VERSIÓN COMPLETA CORREGIDA
+// src/app/api/webhooks/route.ts - VERSIÓN COMPLETA Y FUNCIONAL
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
@@ -165,6 +165,7 @@ async function guardarOrdenEnDB(session: Stripe.Checkout.Session) {
       console.error('❌ Error guardando orden en Supabase:');
       console.error('   Code:', error.code);
       console.error('   Message:', error.message);
+      console.error('   Details:', error.details);
       throw new Error(`Error guardando orden: ${error.message}`);
     }
 
@@ -178,18 +179,28 @@ async function guardarOrdenEnDB(session: Stripe.Checkout.Session) {
 }
 
 async function manejarUsuario(email: string, sessionId: string, orden: any) {
-  console.log('👤 Manejando usuario:', email);
+  console.log('=== 👤 MANEJAR USUARIO INICIADO ===');
+  console.log('📧 Email:', email);
+  console.log('🆔 Session ID:', sessionId);
   
   try {
-    const { data: usuarioExistente } = await supabase
+    console.log('🔍 Buscando usuario existente...');
+    const { data: usuarioExistente, error: busquedaError } = await supabase
       .from('usuarios')
       .select('id, email, tipo, descargas_habilitadas')
       .eq('email', email)
       .single();
 
+    if (busquedaError && busquedaError.code !== 'PGRST116') {
+      console.error('❌ Error buscando usuario:', busquedaError);
+      console.error('   Code:', busquedaError.code);
+      console.error('   Message:', busquedaError.message);
+    }
+
     if (usuarioExistente) {
-      console.log(`✅ Usuario existente (${usuarioExistente.tipo || 'guest'}):`, email);
+      console.log(`✅ Usuario existente encontrado:`, usuarioExistente);
       
+      console.log('🔄 Actualizando usuario existente...');
       const { error: updateError } = await supabase
         .from('usuarios')
         .update({ 
@@ -201,69 +212,97 @@ async function manejarUsuario(email: string, sessionId: string, orden: any) {
 
       if (updateError) {
         console.error('❌ Error actualizando usuario:', updateError);
+        console.error('   Code:', updateError.code);
+        console.error('   Message:', updateError.message);
+      } else {
+        console.log('✅ Usuario actualizado exitosamente');
       }
     } else {
-      console.log('👤 Creando nuevo usuario GUEST...');
+      console.log('👤 Creando NUEVO usuario GUEST...');
+      
+      const usuarioData = {
+        email: email,
+        tipo: 'guest',
+        descargas_habilitadas: true,
+        ultima_compra: new Date().toISOString(),
+        sesion_compra: sessionId,
+        created_at: new Date().toISOString()
+      };
+
+      console.log('💾 Insertando nuevo usuario:', usuarioData);
+      
       const { data: nuevoUsuario, error: insertError } = await supabase
         .from('usuarios')
-        .insert([{
-          email: email,
-          tipo: 'guest',
-          descargas_habilitadas: true,
-          ultima_compra: new Date().toISOString(),
-          sesion_compra: sessionId,
-          created_at: new Date().toISOString()
-        }])
+        .insert([usuarioData])
         .select()
         .single();
 
       if (insertError) {
         console.error('❌ Error creando usuario guest:', insertError);
+        console.error('   Code:', insertError.code);
+        console.error('   Message:', insertError.message);
+        console.error('   Details:', insertError.details);
         throw insertError;
       }
 
-      console.log('✅ Nuevo usuario GUEST creado:', email);
+      console.log('✅ Nuevo usuario GUEST creado:', nuevoUsuario);
     }
+
+    console.log('✅ Manejar usuario completado');
 
   } catch (error) {
     console.error('❌ Error en manejarUsuario:', error);
+    if (error instanceof Error) {
+      console.error('❌ Stack:', error.stack);
+    }
   }
 }
 
 async function habilitarDescargas(email: string, sessionId: string, orden: any) {
-  console.log('🔓 Habilitando descargas para:', email);
-  console.log('📦 Orden recibida:', orden);
+  console.log('=== 🔓 HABILITAR DESCARGAS INICIADO ===');
+  console.log('📧 Email:', email);
+  console.log('🆔 Session ID:', sessionId);
+  console.log('📦 Orden ID:', orden?.id);
   console.log('📚 Items en orden:', orden?.items?.length);
   
   try {
-    if (orden && orden.items) {
-      console.log(`🔄 Procesando ${orden.items.length} items...`);
+    if (!orden || !orden.items) {
+      console.log('❌ No hay orden o items en la orden');
+      return;
+    }
+
+    console.log(`🔄 Procesando ${orden.items.length} items...`);
+    
+    for (const [index, item] of orden.items.entries()) {
+      console.log(`   📖 Item ${index + 1}:`, item.titulo, '(ID:', item.libro_id + ')');
       
-      for (const item of orden.items) {
-        console.log(`   📖 Procesando: ${item.titulo} (ID: ${item.libro_id})`);
-        
-        const descargaData = {
-          usuario_email: email,
-          libro_id: item.libro_id,
-          libro_titulo: item.titulo,
-          sesion_id: sessionId,
-          descargas_disponibles: 3,
-          descargas_usadas: 0,
-          expira_en: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-        };
+      const descargaData = {
+        usuario_email: email,
+        libro_id: item.libro_id,
+        libro_titulo: item.titulo,
+        sesion_id: sessionId,
+        descargas_disponibles: 3,
+        descargas_usadas: 0,
+        expira_en: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      };
 
-        console.log('   💾 Insertando descarga:', descargaData);
-        
-        const { data, error: descargaError } = await supabase
-          .from('descargas')
-          .insert([descargaData])
-          .select();
+      console.log('   💾 Insertando descarga en Supabase...');
+      console.log('   📊 Datos de descarga:', descargaData);
+      
+      // ✅ INSERTAR DIRECTAMENTE en descargas
+      const { data, error: descargaError } = await supabase
+        .from('descargas')
+        .insert([descargaData])
+        .select();
 
-        if (descargaError) {
-          console.error('   ❌ Error insertando descarga:', descargaError);
-        } else {
-          console.log('   ✅ Descarga insertada:', data);
-        }
+      if (descargaError) {
+        console.error('   ❌ ERROR insertando descarga:', descargaError);
+        console.error('   ❌ Código:', descargaError.code);
+        console.error('   ❌ Mensaje:', descargaError.message);
+        console.error('   ❌ Detalles:', descargaError.details);
+        console.error('   ❌ Hint:', descargaError.hint);
+      } else {
+        console.log('   ✅ DESCARGAS INSERTADA EXITOSAMENTE:', data);
       }
     }
 
@@ -271,11 +310,15 @@ async function habilitarDescargas(email: string, sessionId: string, orden: any) 
 
   } catch (error) {
     console.error('❌ Error en habilitarDescargas:', error);
+    if (error instanceof Error) {
+      console.error('❌ Stack:', error.stack);
+    }
   }
 }
 
 async function enviarEmailConfirmacion(email: string, sessionId: string, orden: any, tipoUsuario: string) {
   console.log('📧 Email simulado para:', email);
+  console.log('📧 En un proyecto real se enviaría confirmación vía Resend/SendGrid');
   return true;
 }
 
