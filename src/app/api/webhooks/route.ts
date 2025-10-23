@@ -101,11 +101,15 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     // PASO 2: Guardar orden en BD
     console.log('💾 Paso 2: Guardando orden en Supabase...');
     const orden = await guardarOrdenEnDB(session, stripeSession);
+    console.log('✅ Orden guardada con ID:', orden.id);
     
-    // PASO 3: Manejar usuario
+    // PASO 3: Verificar que tenemos email para descargas
     if (session.customer_email) {
-      console.log('👤 Paso 3: Manejando usuario...');
+      console.log('👤 Paso 3: Manejando usuario y descargas...');
+      console.log('📧 Email disponible:', session.customer_email);
       await manejarUsuario(session.customer_email, session.id, orden);
+    } else {
+      console.log('❌ NO hay customer_email, no se pueden crear descargas');
     }
     
     console.log('✅ Procesamiento del pago completado correctamente');
