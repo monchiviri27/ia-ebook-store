@@ -120,6 +120,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 }
 
 // ✅ GUARDAR ORDEN MEJORADO
+// ✅ GUARDAR ORDEN MEJORADO (VERSIÓN CORREGIDA)
 async function guardarOrdenEnDB(session: Stripe.Checkout.Session, stripeSession: any) {
   console.log('💾 Guardando orden en la base de datos...');
   
@@ -140,7 +141,8 @@ async function guardarOrdenEnDB(session: Stripe.Checkout.Session, stripeSession:
     
     console.log('📋 Procesando line items:', lineItems.length);
     
-    const items = lineItems.map((item, index) => {
+    // ✅ CORREGIDO: Agregar tipo para 'item'
+    const items = lineItems.map((item: any, index) => {
       const product = item.price?.product as Stripe.Product;
       console.log(`   Item ${index + 1}:`, product?.name || 'Sin nombre');
       
