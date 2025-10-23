@@ -1,10 +1,11 @@
-// src/app/success/SuccessContent.tsx - VERSIÓN COMPLETA CORREGIDA
+// src/app/success/SuccessContent.tsx - VERSIÓN PROFESIONAL
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useCarrito } from '@/context/CarritoContext';
+import { useToast } from '@/context/ToastContext';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -37,6 +38,7 @@ export default function SuccessContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('session_id');
   const { vaciarCarrito, items } = useCarrito();
+  const { addToast } = useToast();
   
   const [orden, setOrden] = useState<Orden | null>(null);
   const [descargas, setDescargas] = useState<Descarga[]>([]);
@@ -98,25 +100,46 @@ export default function SuccessContent() {
     cargarDatos();
   }, [sessionId]);
 
-  // ✅ FUNCIÓN DE DESCARGA PROFESIONAL
+  // ✅ FUNCIÓN DE DESCARGA PROFESIONAL - CON LÍMITE REAL
   const manejarDescarga = async (libroId: string, formato: 'pdf' | 'epub') => {
     if (!orden) {
-      alert('Error: No hay información de orden disponible');
+      addToast({
+        type: 'error',
+        title: 'Error',
+        message: 'No hay información de orden disponible'
+      });
       return;
     }
 
     try {
       setDescargando(`${libroId}-${formato}`);
       
-      // 1. Encontrar el libro en la orden
-      const itemOrden = orden.items.find((item: any) => item.libro_id === libroId);
-      
-      if (!itemOrden) {
-        alert('No se encontró el libro en tu orden');
+      // 1. Verificar límite de descargas
+      const descarga = descargas.find(d => d.libro_id === libroId);
+      const descargasRestantes = descarga ? descarga.descargas_disponibles - descarga.descargas_usadas : 3;
+
+      if (descargasRestantes <= 0) {
+        addToast({
+          type: 'warning',
+          title: 'Límite alcanzado',
+          message: 'Has agotado tus descargas disponibles para este libro'
+        });
         return;
       }
 
-      // 2. Buscar en la base de datos por TÍTULO
+      // 2. Encontrar el libro en la orden
+      const itemOrden = orden.items.find((item: any) => item.libro_id === libroId);
+      
+      if (!itemOrden) {
+        addToast({
+          type: 'error',
+          title: 'Error',
+          message: 'No se encontró el libro en tu orden'
+        });
+        return;
+      }
+
+      // 3. Buscar en la base de datos por TÍTULO
       const { data: libro, error } = await supabase
         .from('libros')
         .select('*')
@@ -124,19 +147,27 @@ export default function SuccessContent() {
         .single();
 
       if (error || !libro) {
-        alert(`Libro "${itemOrden.titulo}" no encontrado`);
+        addToast({
+          type: 'error',
+          title: 'Error',
+          message: `Libro "${itemOrden.titulo}" no encontrado`
+        });
         return;
       }
 
-      // 3. Obtener la ruta del archivo
+      // 4. Obtener la ruta del archivo
       const rutaArchivo = formato === 'pdf' ? libro.ruta_pdf : libro.ruta_epub;
       
       if (!rutaArchivo) {
-        alert(`Formato ${formato.toUpperCase()} no disponible`);
+        addToast({
+          type: 'warning',
+          title: 'Formato no disponible',
+          message: `El formato ${formato.toUpperCase()} no está disponible para este libro`
+        });
         return;
       }
 
-      // 4. ✅ DESCARGAR DIRECTAMENTE (sin nueva pestaña)
+      // 5. ✅ DESCARGAR DIRECTAMENTE
       console.log('📥 Iniciando descarga desde:', rutaArchivo);
       const response = await fetch(rutaArchivo);
       
@@ -155,8 +186,7 @@ export default function SuccessContent() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      // 5. Actualizar contador de descargas
-      const descarga = descargas.find(d => d.libro_id === libroId);
+      // 6. ✅ ACTUALIZAR CONTADOR DE DESCARGAS (IMPORTANTE)
       if (descarga) {
         const { error: updateError } = await supabase
           .from('descargas')
@@ -174,11 +204,20 @@ export default function SuccessContent() {
         }
       }
 
-      alert(`✅ Descarga completada: ${libro.titulo}`);
+      // 7. ✅ NOTIFICACIÓN DE ÉXITO
+      addToast({
+        type: 'success',
+        title: 'Descarga iniciada',
+        message: `${libro.titulo} (${formato.toUpperCase()}) se está descargando`
+      });
 
     } catch (error) {
       console.error('Error en descarga:', error);
-      alert('Error al procesar la descarga. Intenta nuevamente.');
+      addToast({
+        type: 'error',
+        title: 'Error de descarga',
+        message: 'No se pudo completar la descarga. Intenta nuevamente.'
+      });
     } finally {
       setDescargando(null);
     }
@@ -263,11 +302,19 @@ export default function SuccessContent() {
                       <p className="text-gray-600">Cantidad: {item.cantidad}</p>
                       <p className="text-green-600 font-semibold">${item.precio}</p>
                       
-                      {descarga && (
-                        <p className="text-sm text-gray-500 mt-2">
-                          Descargas disponibles: {descargasRestantes}/3
-                        </p>
-                      )}
+                      {/* Contador de descargas */}
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className={`text-sm font-medium ${
+                          descargasRestantes > 1 ? 'text-green-600' : 
+                          descargasRestantes === 1 ? 'text-yellow-600' : 'text-red-600'
+                        }`}>
+                          {descargasRestantes > 0 ? (
+                            <>📥 {descargasRestantes} descarga{descargasRestantes !== 1 ? 's' : ''} restante{descargasRestantes !== 1 ? 's' : ''}</>
+                          ) : (
+                            <>❌ Límite alcanzado</>
+                          )}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
@@ -275,7 +322,7 @@ export default function SuccessContent() {
                   <div className="flex gap-3 flex-shrink-0">
                     <button
                       onClick={() => manejarDescarga(item.libro_id, 'pdf')}
-                      disabled={descargando === `${item.libro_id}-pdf`}
+                      disabled={descargando === `${item.libro_id}-pdf` || descargasRestantes <= 0}
                       className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2 min-w-20 justify-center"
                     >
                       {descargando === `${item.libro_id}-pdf` ? (
@@ -287,7 +334,7 @@ export default function SuccessContent() {
                     
                     <button
                       onClick={() => manejarDescarga(item.libro_id, 'epub')}
-                      disabled={descargando === `${item.libro_id}-epub`}
+                      disabled={descargando === `${item.libro_id}-epub` || descargasRestantes <= 0}
                       className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2 min-w-20 justify-center"
                     >
                       {descargando === `${item.libro_id}-epub` ? (
@@ -300,6 +347,29 @@ export default function SuccessContent() {
                 </div>
               );
             })}
+          </div>
+        </div>
+
+        {/* Información de descargas */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+          <h3 className="font-semibold text-blue-900 mb-3">💡 Información de descargas</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-800">
+            <div className="flex items-center gap-2">
+              <span>🎯</span>
+              <span>Límite: 3 descargas por libro</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span>⏰</span>
+              <span>Disponible por 30 días</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span>📱</span>
+              <span>Formatos: PDF y EPUB</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span>🔄</span>
+              <span>El contador se actualiza automáticamente</span>
+            </div>
           </div>
         </div>
 
