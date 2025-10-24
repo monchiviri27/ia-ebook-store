@@ -1,4 +1,6 @@
 // src/components/Footer.tsx
+import Link from 'next/link';
+
 export default function Footer() {
   return (
     <footer className="bg-gray-900 text-white">
@@ -18,18 +20,9 @@ export default function Footer() {
               Tu tienda de libros digitales de última generación. Descubre obras únicas creadas con inteligencia artificial.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <span className="sr-only">Twitter</span>
-                🐦
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <span className="sr-only">Facebook</span>
-                📘
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <span className="sr-only">Instagram</span>
-                📷
-              </a>
+              <span className="text-gray-400">🐦</span>
+              <span className="text-gray-400">📘</span>
+              <span className="text-gray-400">📷</span>
             </div>
           </div>
 
@@ -38,24 +31,24 @@ export default function Footer() {
             <h3 className="font-semibold text-lg mb-4">Enlaces Rápidos</h3>
             <ul className="space-y-2">
               <li>
-                <a href="/" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/" className="text-gray-400 hover:text-white transition-colors">
                   Inicio
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/catalogo" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/catalogo" className="text-gray-400 hover:text-white transition-colors">
                   Catálogo
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/novedades" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/novedades" className="text-gray-400 hover:text-white transition-colors">
                   Novedades
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/ofertas" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/ofertas" className="text-gray-400 hover:text-white transition-colors">
                   Ofertas
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -65,24 +58,24 @@ export default function Footer() {
             <h3 className="font-semibold text-lg mb-4">Soporte</h3>
             <ul className="space-y-2">
               <li>
-                <a href="/contacto" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/contacto" className="text-gray-400 hover:text-white transition-colors">
                   Contacto
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/faq" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/faq" className="text-gray-400 hover:text-white transition-colors">
                   Preguntas Frecuentes
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/terminos" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/terminos" className="text-gray-400 hover:text-white transition-colors">
                   Términos de Servicio
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/privacidad" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/privacidad" className="text-gray-400 hover:text-white transition-colors">
                   Política de Privacidad
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
