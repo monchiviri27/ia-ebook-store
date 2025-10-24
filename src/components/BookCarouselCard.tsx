@@ -39,8 +39,6 @@ export default function BookCarouselCard({ libro }: BookCarouselCardProps) {
       formato === 'pdf' ? libro.ruta_pdf : libro.ruta_epub,
       formato,
       libro.titulo,
-      libro.portada_url, // ← Nuevo parámetro
-      libro.autor        // ← Nuevo parámetro
     );
   } finally {
     setDownloading(null);
