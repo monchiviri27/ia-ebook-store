@@ -1,4 +1,4 @@
-// src/components/BookCard.tsx - VERSIÓN CON BOTÓN DE ELIMINAR
+// src/components/BookCard.tsx - VERSIÓN CORREGIDA
 'use client';
 
 import Image from 'next/image';
@@ -28,7 +28,8 @@ export default function BookCard({ libro }: BookCardProps) {
       await descargarArchivo(
         formato === 'pdf' ? libro.ruta_pdf : libro.ruta_epub,
         formato,
-        libro.titulo
+        libro.titulo,
+        libro.id // ← PARÁMETRO AÑADIDO
       );
     } finally {
       setDownloading(null);

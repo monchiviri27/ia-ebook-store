@@ -21,7 +21,7 @@ export const useDownload = () => {
     rutaArchivo: string, 
     formato: 'pdf' | 'epub', 
     titulo: string,
-    libroId: string // ← Solo este parámetro es necesario ahora
+    libroId: string // ← ✅ Ahora acepta 4 parámetros correctamente
   ) => {
     try {
       // ✅ VERIFICAR SI EL USUARIO PUEDE DESCARGAR

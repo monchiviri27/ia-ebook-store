@@ -39,7 +39,7 @@ export default function BookCarouselCard({ libro }: BookCarouselCardProps) {
       formato === 'pdf' ? libro.ruta_pdf : libro.ruta_epub,
       formato,
       libro.titulo,
-      libro.id
+      libro.id // ← Este parámetro está bien, el error está en otro lugar
     );
   } finally {
     setDownloading(null);
