@@ -58,8 +58,7 @@ export default function LibroDetailPage() {
         formato === 'pdf' ? libro.ruta_pdf : libro.ruta_epub,
         formato,
         libro.titulo,
-        libro.portada_url,
-        libro.autor
+        libro.id // ✅ CORREGIDO: Solo 4 parámetros
       );
     } finally {
       setDownloading(null);
@@ -69,7 +68,6 @@ export default function LibroDetailPage() {
   const handleAddToCart = () => {
     if (!libro) return;
     agregarAlCarrito(libro);
-    // ✅ CORREGIDO: Usar objeto en lugar de argumentos separados
     addToast({
       type: 'success',
       title: 'Libro agregado',
