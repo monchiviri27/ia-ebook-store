@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { CarritoProvider } from "@/context/CarritoContext";
 import { ToastProvider } from "@/context/ToastContext";
+import ChatbotWidget from "@/components/ChatbotWidget"; // ← Importar el chatbot
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,6 +38,7 @@ export default function RootLayout({
               {children}
             </main>
             <Footer />
+            <ChatbotWidget /> {/* ← Agregar el chatbot aquí */}
           </CarritoProvider>
         </ToastProvider>
       </body>
