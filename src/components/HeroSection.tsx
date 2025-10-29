@@ -17,7 +17,7 @@ export default function HeroSection() {
         />
         
         {/* Overlay para mejor legibilidad del texto */}
-        <div className="absolute inset-0 bg-black/40"></div>
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px]"></div>
       </div>
 
       {/* Contenido superpuesto */}
