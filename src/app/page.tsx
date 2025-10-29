@@ -1,9 +1,10 @@
-// src/app/page.tsx - VERSIÓN CON CARROUSELS
+// src/app/page.tsx - VERSIÓN CORRECTA
 'use client';
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Libro } from '@/context/CarritoContext';
+import SearchBar from '@/components/SearchBar'; // ← Solo SearchBar
 import HeroSection from '@/components/HeroSection';
 import BookGrid from '@/components/BookGrid';
 import BookCarousel from '@/components/BookCarousel';
@@ -49,47 +50,39 @@ export default function HomePage() {
   }, []);
 
   // Filtrar libros para diferentes secciones
-  const novedades = libros.slice(0, 8); // Primeros 8 libros como novedades
-  const destacados = libros.filter(libro => libro.precio > 5).slice(0, 8); // Libros > $5
-  const recomendados = libros.slice().sort(() => Math.random() - 0.5).slice(0, 8); // Aleatorios
+  const novedades = libros.slice(0, 8);
+  const destacados = libros.filter(libro => libro.precio > 5).slice(0, 8);
+  const recomendados = libros.slice().sort(() => Math.random() - 0.5).slice(0, 8);
 
   if (loading) return <LoadingState />;
   if (error) return <ErrorState error={error} />;
 
   return (
     <main className="min-h-screen bg-gray-50">
+      {/* SOLO SearchBar - Header ya está en layout */}
+      <SearchBar />
       <HeroSection />
       
       {/* Sección de Carrousels */}
-      
       <section className="py-8">
         <div className="max-w-7xl mx-auto">
-          
-          {/* Novedades */}
           <BookCarousel 
             titulo="🆕 Novedades" 
             libros={novedades}
             icono="🆕"
           />
-          
-          {/* Destacados */}
           <BookCarousel 
             titulo="⭐ Libros Destacados" 
             libros={destacados}
             icono="⭐"
           />
-          
-          {/* Recomendados */}
           <BookCarousel 
             titulo="💖 Recomendados para ti" 
             libros={recomendados}
             icono="💖"
           />
-          
         </div>
       </section>
-     
-      
     </main>
   );
 }

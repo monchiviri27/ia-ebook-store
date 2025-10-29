@@ -11,7 +11,7 @@ export default function ChatbotWidget() {
       {/* Botón flotante - más pequeño en móvil */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-4 right-4 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300 z-50 flex items-center justify-center w-12 h-12 md:w-14 md:h-14 chatbot-button"
+        className="fixed bottom-4 right-4 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300 z-50 flex items-center justify-center w-12 h-12 md:w-16 md:h-16 chatbot-button"
         aria-label="Abrir chatbot"
       >
         <span className="text-base md:text-lg">🤖</span>
